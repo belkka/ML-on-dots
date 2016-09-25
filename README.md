@@ -1,1 +1,2 @@
-# ML-on-dots
+# ML-on-DOTS
+# New member added

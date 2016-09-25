@@ -5,19 +5,9 @@ import random
 
 K = 10
 
+
 with open("input.txt") as raw_data:
     X = np.loadtxt(raw_data, dtype=int)
-
-#print "Оцифрованные изображения:\n", X
-
-# ===============
-
-# Инициализация начальных центров
-
-# Forgy method -- в качестве начальных центров кластеров
-# выбираются случайные среди элементов данных
-
-centers = np.array(random.sample(X, K))  # случайные K элементов из списка  X
 
 
 # ===============
@@ -38,7 +28,7 @@ def update_step():
 
     global centers
     centers = np.array([
-                        np.array([X[i] for i in c]).mean(axis=0)
+                        np.mean(np.array([X[i] for i in c]), axis=0)
                         for c in clusters
     ])
 
@@ -50,10 +40,16 @@ def vector_hash(vec):
 def centers_hash(centers):
     return hash(repr(map(vector_hash, centers)))
 
+# ===============
+# Инициализация начальных центров
+
+# Forgy method -- в качестве начальных центров кластеров
+# выбираются случайные среди элементов данных
+
+centers = np.array(random.sample(X, K))  # случайные K элементов из списка  X
+
 
 # ==============
-
-#print "Пожалуйста, понаблюдайте за появляющимися точками"
 
 # повторяем этапы пока список центров не перестанет изменяться
 
@@ -68,7 +64,6 @@ while curr_hash != prev_hash:
     update_step()
 
     curr_hash = centers_hash(centers)
-    #print "."
 
 
 # Готово

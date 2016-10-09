@@ -3,19 +3,22 @@ import numpy as np
 from sklearn.cluster import KMeans
 
 
-K = 3
+class params:
+    K = 3
+    dtype = float
+
 
 with open("input.txt") as raw_data:
-    X = np.loadtxt(raw_data)
+    X = np.loadtxt(raw_data, dtype=params.dtype)
 
-robot = KMeans(n_clusters=K, init='k-means++', n_init=1,
+robot = KMeans(n_clusters=params.K, init='k-means++', n_init=1,
                max_iter=1000, precompute_distances=False)
 
-clusters = [list() for __ in xrange(K)]
+clusters = [list() for __ in xrange(params.K)]
 
 for i, prediction in enumerate(robot.fit_predict(X)):
     clusters[prediction].append(i)
 
 with open("output.txt", "w") as out:
-    for i in xrange(K):
-        out.write(" ".join(map(str, clusters[i])) + "\n")
+    for i in xrange(params.K):
+        out.write(" ".join(map(str, clusters[i])))

@@ -1,76 +1,120 @@
 # coding: utf-8
 import numpy as np
-import random
 
 
-K = 3
+class params:
+    K = 3  # количество кластеров
+    alg = "k-means"  # ...
+    init = "randpart"  # метод инициализации
+    dtype = float  # тип координат вектора (для цифр int для ирисов float)
 
 
-with open("input.txt") as raw_data:
-    X = np.loadtxt(raw_data)
+class io:
+    @staticmethod
+    def read_input(dtype=float):
+        with open("input.txt") as raw_data:
+            return np.loadtxt(raw_data, dtype=dtype)
+
+    @staticmethod
+    def write_output(clusters):
+        with open("output.txt", "w") as out:
+            for c in clusters:
+                out.write(" ".join(map(str, c)) + "\n")
 
 
-# ===============
+def np_hash(vec):
+    return hash(vec.tostring())
 
 
-def assignment_step():
-    # этап распределения всех векторов в кластеры с ближайшими центрами
+class KMeans:
+    def __init__(self, K, init, distance, cent):
+        self.K = K
+        self.init = init
+        self.distance = distance
+        self.cent = cent
 
-    global clusters
-    clusters = [list() for __ in xrange(K)]  # опустошение кластеров
+    def assignment_step(self, X):
+        # этап распределения всех векторов в кластеры с ближайшими центрами
+        self.clusters = [list() for __ in xrange(self.K)]  # опустошение
 
-    for (i, x) in enumerate(X):
-        clusters[np.argmin([((x - c) ** 2).sum() for c in centers])].append(i)
+        for (i, x) in enumerate(X):
+            self.clusters[np.argmin(
+                [self.distance(x, c) for c in self.centers]
+            )].append(i)
 
+    def update_step(self, X):
+        # этап перерасчёта центров
+        self.centers = np.array([
+            self.cent(np.take(X, c, axis=0), axis=0) for c in self.clusters
+        ])
 
-def update_step():
-    # этап перерасчёта центров
+    def fit_predict(self, X):
+        self.clusters, self.centers = self.init(X, self.K)
 
-    global centers
-    centers = np.array([
-                        np.mean(np.array([X[i] for i in c]), axis=0)
-                        for c in clusters
-    ])
+        if self.centers is None:
+            self.update_step(X)
 
+        hash_prev, hash_curr = 0, 1
 
-def vector_hash(vec):
-    return hash(repr(vec))
+        while hash_prev != hash_curr:
+            self.assignment_step(X)
+            self.update_step(X)
 
+            hash_prev = hash_curr
+            hash_curr = np_hash(self.centers)
 
-def centers_hash(centers):
-    return hash(repr(map(vector_hash, centers)))
-
-# ===============
-# Инициализация начальных центров
-
-# Random partition -- в качестве начальных кластеров
-# выбирается случайное разбиение
-
-clusters = [list() for __ in xrange(K)]
-for i in xrange(len(X)):
-    clusters[random.randint(0, K - 1)].append(i)
-
-update_step()
-
-# ==============
-
-# повторяем этапы пока список центров не перестанет изменяться
-
-prev_hash = None
-curr_hash = centers_hash(centers)
+        return self.clusters
 
 
-while curr_hash != prev_hash:
-    prev_hash = curr_hash
+class init:
+    # Функции инициализации возвращают пару
+    #  (начальные кластеры, начальные центры)
+    # В зависимости от метода одно из двух принимает значение None
+    @staticmethod
+    def forgy(X, K):
+        indices = np.random.choice(len(X), K, replace=False)
+        return (None, np.take(X, indices, axis=0))
 
-    assignment_step()
-    update_step()
+    @staticmethod
+    def randpart(X, K):
+        # сдучайно делит всю выборку на K приблизительно равных кластеров
+        sz = len(X)
+        d, m = divmod(sz, K)
+        edges = np.concatenate((
+            np.arange(d + 1, m * (d + 1) + 1, d + 1),
+            np.arange(m * (d + 1) + d, sz, d)
+        ))
+        return (np.split(np.random.permutation(sz), edges), None)
 
-    curr_hash = centers_hash(centers)
+
+class dist:
+    @staticmethod
+    def euclid(x, y):  # квадрат евклидова расстояния
+        return ((x - y) ** 2).sum()
+
+    @staticmethod
+    def manhattan(x, y):
+        return abs(x - y).sum()
 
 
-# Готово
+algorithmes = {
+    "k-means": (dist.euclid, np.mean),
+    "k-medians": (dist.manhattan, np.median)
+}
 
-with open("output.txt", "w") as out:
-    for i in xrange(K):
-        out.write(" ".join(map(str, clusters[i])) + "\n")
+init_methods = {
+    "forgy": init.forgy,
+    "randpart": init.randpart,
+}
+
+
+def main():
+    distance, center = algorithmes[params.alg]
+
+    brain = KMeans(params.K, init_methods[params.init], distance, center)
+
+    io.write_output(brain.fit_predict(io.read_input(params.dtype)))
+
+
+if __name__ == "__main__":
+    main()

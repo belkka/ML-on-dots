@@ -19,7 +19,7 @@ string s;  // Вспомогательная строка для операци�
 
 void read_output()
 {
-	freopen("output.txt", "r", stdin);  //Файл в котором лежат список кластеров
+	//freopen("output.txt", "r", stdin);  //Файл в котором лежат список кластеров
 	
 	int index_clusters = 0;
 
@@ -37,14 +37,6 @@ void read_output()
 			while('0' <= s[i] and s[i] <= '9')
 			    var = (var << 3) + (var << 1) + (s[i++] - '0');
 
-			//printf("считано: %d\n", var);
-
-			
-			//while(s[index] >= 48 && s[index] <= 59)
-			//{
-				//number.push_back(s[index]);
-				//index++;
-			//}
 			clusters[index_clusters].push_back(var);
 		}
 		index_clusters++;
@@ -100,7 +92,7 @@ void print_statistics()
 }
 
 
-void count_accuracy()
+double accuracy()
 {
 	int all = 0, good = 0;
 	for(int i = 0; i < K; i++)
@@ -111,9 +103,7 @@ void count_accuracy()
 		good += *max_element(table[i], table[i] + K);
 	}
 
-	double accuracy = double(good) / all;
-	printf("Аккуратность: %lf\n", accuracy);
-	
+	return double(good) / all;
 }
 
 
@@ -131,7 +121,7 @@ int main()
 
 	print_statistics();
 
-	count_accuracy();
+	printf("Аккуратность: %lf\n", accuracy());
 
 	
 }

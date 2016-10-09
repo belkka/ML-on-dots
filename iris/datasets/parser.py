@@ -10,7 +10,7 @@ def parse():
     inp = open("input.txt", "w")
     ans = open("answers.txt", "w")
 
-    with open("iris.data", "r") as dataset:
+    with open("iris.data.shuffled", "r") as dataset:
         for line in dataset:
             arr = line.split(",")
             data, mark = arr[:-1], arr[-1]
